@@ -43,12 +43,12 @@ class test {
 public static void main(String args[]) throws Exception {
 
     //region CREATE RAM
-    DataInputStream input = new DataInputStream(new FileInputStream("RAM.dat"));
-            while (input.available() > 0) {
-                String data = Integer.toHexString(Integer.parseInt(String.valueOf(input.read())));
-                RAM.add(data);
-            }
-            input.close();
+//    DataInputStream input = new DataInputStream(new FileInputStream("RAM.dat"));
+//            while (input.available() > 0) {
+//                String data = Integer.toHexString(Integer.parseInt(String.valueOf(input.read())));
+//                RAM.add(data);
+//            }
+//            input.close();
     //endregion
 
     //region Get Input & Set caches and variables
@@ -67,17 +67,17 @@ public static void main(String args[]) throws Exception {
     //      int blockSizeOfs2 = (int)Math.pow(2,b2);
 
         L1s=1;
-        L1b=1;
+        L1b=3;
         L1E=1;
         L2s=1;
-        L2b=1;
+        L2b=3;
         L2E=1;
         L1S = (int)Math.pow(2,L1s);
         L2S = (int)Math.pow(2,L2s);
         L1B = (int)Math.pow(2,L1b);
         L2B = (int)Math.pow(2,L2b);
-        L1TagSize = 32 - 2 - 2;
-        L2TagSize = 32 - 2 - 2;
+        L1TagSize = 32 - L1s - L1s;
+        L2TagSize = 32 - L2s - L2s;
 
         //Set tag sizes
     //    L1TagSize = 32 - L1s - L1b;
@@ -101,64 +101,63 @@ public static void main(String args[]) throws Exception {
         }
     //endregion
 
-        String trace1= "L 001da310, 6"; // Example trace
-        File file=new File("trace.txt");    //creates a new file instance
-        FileReader fr=new FileReader(file);   //reads the file
-        BufferedReader br=new BufferedReader(fr);  //creates a buffering character input stream
-        StringBuffer sb=new StringBuffer();    //constructs a string buffer with no characters
-        String line;
-        while((line=br.readLine())!=null)
-        while ()
-        String[] tokenized =tokenizeInput(trace1);
-        String instruction = tokenized[0];
+//        String trace1= "L 001da310, 6"; // Example trace
 
-    //region Set currentCache
-        Line[][] currentCache;
-        if (instruction.equals("L")) {
-                currentCache = L1D;
-            }
-            else if (instruction.equals("I")) {
-                currentCache = L1I;
-            }
+    //region Read Trace File
+    File file = new File("traces\\engin.trace");    //creates a new file instance
+        FileReader fr = new FileReader(file);   //reads the file
+        BufferedReader br = new BufferedReader(fr);  //creates a buffering character input stream
+        StringBuffer sb = new StringBuffer();    //constructs a string buffer with no characters
+        String line;
     //endregion
 
-    //region Invoke instructions "M", "L", "I", "S"
-    if (instruction.equals("L")){
-            tokenized = tokenizeInput(trace1);
-            String address = hexToBinary(tokenized[1]);
-            int size = Integer.parseInt(tokenized[2]);
+        while((line = br.readLine()) != null) {
 
-            // size --> 0 skip to the next instruction.
-//            if (size == 0) {
-//                continue;
-//            }
-            // Instruction, address and size info.
-            System.out.println("L " + address + " " + size);
+            String[] tokenized = tokenizeInput(line);
+            String instruction = tokenized[0];
 
-            // Execute the instruction with L1D cache.
-            getInstructionAndData(L1I, L1D, L2, address, size, "L1D");
-            System.out.println("hello");
-        }
-        else if (instruction.equals("I")) {
+            //region Set currentCache
+            Line[][] currentCache;
+            if (instruction.equals("L")) {
+                currentCache = L1D;
+            } else if (instruction.equals("I")) {
+                currentCache = L1I;
+            }
+            //endregion
 
-            tokenized = tokenizeInput(trace1);
-            String address = hexToBinary(tokenized[1]);
-            int size = Integer.parseInt(tokenized[2]);
-            String data = tokenized[3];
+            //region Invoke instructions "M", "L", "I", "S"
+            if (instruction.equals("L")) {
+                tokenized = tokenizeInput(line);
+                String address = hexToBinary(tokenized[1]);
+                int size = Integer.parseInt(tokenized[2]);
 
-            // size --> 0 skip to the next instruction.
-//            if (size == 0) {
-//
-//                continue;
-//            }
+                // size --> 0 skip to the next instruction.
+                if (size == 0) {
+                    continue;
+                }
+                // Instruction, address and size info.
+                System.out.println("L " + address + " " + size);
+                // Execute the instruction with L1D cache.
+                getInstructionAndData(L1I, L1D, L2, address, size, "L1D");
+                System.out.println("hello");
+            } else if (instruction.equals("S")) {
 
-            // Instruction, address, size and data info.
-            System.out.println("S " + address + " " + size + " " + data);
+                tokenized = tokenizeInput(line);
+                String address = hexToBinary(tokenized[1]);
+                int size = Integer.parseInt(tokenized[2]);
+                String data = tokenized[3];
+                // size --> 0 skip to the next instruction.
+                if (size == 0) {
 
-            // Store the given data for L1D and L2 cache.
-            StoreData(L1D, L2, address, size, data);
+                    continue;
+                }
+                // Instruction, address, size and data info.
+                System.out.println("S " + address + " " + size + " " + data);
+                // Store the given data for L1D and L2 cache.
+                StoreData(L1D, L2, address, size, data);
 
 //            break;
+            }
         }
     //endregion
 
@@ -243,7 +242,7 @@ public static void main(String args[]) throws Exception {
                     L1I_hits++;
                     currentCacheName = "L1I";
                     break;
-                case "L2D":
+                case "L1D":
                     L1D_hits++;
                     currentCacheName = "L1D";
                     break;

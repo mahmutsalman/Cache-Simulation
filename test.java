@@ -1,9 +1,12 @@
+//--Systems Programming Project 3: Cachelab--//
+//----AUTHORS----//
+//Engin Bektaş, 150118501//
+//Mahmut Salman, 150118506//
+//Kardelen Kubat, //
+
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Scanner;
-//L1setbit = kaçıncı set
 class test {
     //region static variables
     static Line[][] L1I;
@@ -42,10 +45,8 @@ class test {
     static int L2_misses;
     static int L2_evictions;
     //endregion
-
-
     static ArrayList<String> RAM = new ArrayList<>();
-public static void main(String args[]) throws Exception {
+public static void main(String[] args) throws Exception {
 
     //region CREATE RAM
     DataInputStream input = new DataInputStream(new FileInputStream("RAM.dat"));
@@ -141,7 +142,7 @@ public static void main(String args[]) throws Exception {
                     continue;
                 }
                 // Instruction, address and size info.
-                System.out.println("L " + address + " " + size);
+                System.out.println("L " + tokenized[1] + " " + size);
                 // Execute the instruction with L1D cache.
                 getInstructionAndData(L1I, L1D, L2, address, size, "L1D");
             }
@@ -155,7 +156,7 @@ public static void main(String args[]) throws Exception {
                     continue;
                 }
                 // Instruction, address and size info.
-                System.out.println("L " + address + " " + size);
+                System.out.println("L " + tokenized[1] + " " + size);
                 // Execute the instruction with L1D cache.
                 getInstructionAndData(L1I, L1D, L2, address, size, "L1I");
             }
@@ -170,7 +171,7 @@ public static void main(String args[]) throws Exception {
                     continue;
                 }
                 // Instruction, address, size and data info.
-                System.out.println("S " + address + " " + size + " " + data);
+                System.out.println("S " + tokenized[1] + " " + size + " " + data);
                 // Store the given data for L1D and L2 cache.
                 StoreData(L1D, L2, address, size, data);
             }
@@ -185,7 +186,7 @@ public static void main(String args[]) throws Exception {
                     continue;
                 }
                 // Instruction, address, size and data info.
-                System.out.println("M " + address + " " + size + " " + data);
+                System.out.println("M " + tokenized[1] + " " + size + " " + data);
                 // Modify the given data for L1I, L1D and L2 cache.
                 ModifyData(L1I, L1D, L2, size, address, data);
             }
@@ -459,7 +460,7 @@ public static void main(String args[]) throws Exception {
             System.out.print("L1D, ");
         if (L2Hit)
             System.out.print("L2, ");
-        System.out.println("RAM.");
+        System.out.print("RAM.");
 
     }
 
@@ -468,8 +469,13 @@ public static void main(String args[]) throws Exception {
                                                int address) throws IOException {
 
         String extractedData= "";
-        for (int i = 0; i < L2B; i++)
-            extractedData = extractedData + RAM.get(address + i);
+        for (int i = 0; i < L2B; i++) {
+            if (RAM.get(address + i).length() == 1) {
+                extractedData = extractedData + "0" + RAM.get(address + i);
+            } else {
+                extractedData = extractedData + RAM.get(address + i);
+            }
+        }
 
          // Extracted Data from RAM.
 

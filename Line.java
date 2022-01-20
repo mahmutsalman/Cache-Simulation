@@ -4,22 +4,16 @@ public class Line {
 
     private String validBit;
     private String tag;
-    private String date;
+    private int time;
+    String data;
 
-    //Block 'a' data ekleme
-
-    ArrayList<String> block = new ArrayList<String>();
-    
-    //Complex
-    //111
-    
-    public void addDataToBlock(String data){
-
-        block.add(date);
+    public Line() {
+        validBit = "0";
     }
 
+
     public String getValidBit() {
-        return this.validBit;
+        return validBit;
     }
 
     public void setValidBit(String validBit) {
@@ -27,52 +21,26 @@ public class Line {
     }
 
     public String getTag() {
-        return this.tag;
+        return tag;
     }
 
     public void setTag(String tag) {
         this.tag = tag;
     }
 
-    public String getDate() {
-        return this.date;
+    public int getTime() {
+        return time;
     }
 
-    public void setDate(String date) {
-        this.date = date;
+    public void setTime(int time) {
+        this.time = time;
     }
 
-    public ArrayList<String> getBlock() {
-        return this.block;
+    public String getData() {
+        return data;
     }
 
-    public void setBlock(ArrayList<String> block) {
-        this.block = block;
+    public void setData(String data) {
+        this.data = data;
     }
-
-    public Line validBit(String validBit) {
-        setValidBit(validBit);
-        return this;
-    }
-
-    public Line tag(String tag) {
-        setTag(tag);
-        return this;
-    }
-
-    public Line date(String date) {
-        setDate(date);
-        return this;
-    }
-
-    public Line block(ArrayList<String> block) {
-        setBlock(block);
-        return this;
-    }
-
-   
-
-    
-
-    
 }

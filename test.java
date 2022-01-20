@@ -2,7 +2,7 @@
 //----AUTHORS----//
 //Engin Bektaş, 150118501//
 //Mahmut Salman, 150118506//
-//Kardelen Kubat, //
+//Kardelen Kubat, 150118056//
 
 import java.io.*;
 import java.util.ArrayList;
@@ -59,35 +59,21 @@ public static void main(String[] args) throws Exception {
 
     //region Get Input & Set caches and variables
     //-----------------TAKE INPUT AS ARGS
-    //        int s1 = Integer.parseInt(args[1]);
-    //		int E1 = Integer.parseInt(args[3]);
-    //		int b1 = Integer.parseInt(args[5]);
-    //
-    //		int s2 = Integer.parseInt(args[7]);
-    //		int E2 = Integer.parseInt(args[9]);
-    //		int b2 = Integer.parseInt(args[11]);
-    //      String trace = args[13];
-    //      int L1S = (int)Math.pow(2,s1);
-    //      int L2S = (int)Math.pow(2,s2);
-    //      int blockSizeOfs1 = (int)Math.pow(2,b1);
-    //      int blockSizeOfs2 = (int)Math.pow(2,b2);
+            int L1s = Integer.parseInt(args[1]);
+    		int L1E = Integer.parseInt(args[3]);
+    		int L1b = Integer.parseInt(args[5]);
 
-        L1s=1;
-        L1b=3;
-        L1E=1;
-        L2s=1;
-        L2b=3;
-        L2E=1;
+    		int L2s = Integer.parseInt(args[7]);
+    		int L2E = Integer.parseInt(args[9]);
+    		int L2b = Integer.parseInt(args[11]);
+            String trace = args[13];
+
         L1S = (int)Math.pow(2,L1s);
         L2S = (int)Math.pow(2,L2s);
         L1B = (int)Math.pow(2,L1b);
         L2B = (int)Math.pow(2,L2b);
         L1TagSize = 32 - L1s - L1s;
         L2TagSize = 32 - L2s - L2s;
-
-        //Set tag sizes
-    //    L1TagSize = 32 - L1s - L1b;
-    //    L2TagSize = 32 - L2s - L2b;
 
         //Creating caches
         L1I = new Line[L1S][L1E];
@@ -110,10 +96,9 @@ public static void main(String[] args) throws Exception {
 //        String trace1= "L 001da310, 6"; // Example trace
 
     //region Read Trace File
-    File file = new File("traces\\test_large.trace");    //creates a new file instance
+    File file = new File("traces\\" + "test_small.trace");    //creates a new file instance
         FileReader fr = new FileReader(file);   //reads the file
         BufferedReader br = new BufferedReader(fr);  //creates a buffering character input stream
-        StringBuffer sb = new StringBuffer();    //constructs a string buffer with no characters
         String line;
     //endregion
 
@@ -122,13 +107,7 @@ public static void main(String[] args) throws Exception {
             String[] tokenized = tokenizeInput(line);
             String instruction = tokenized[0];
 
-            //region Set currentCache
-            Line[][] currentCache;
-            if (instruction.equals("L")) {
-                currentCache = L1D;
-            } else if (instruction.equals("I")) {
-                currentCache = L1I;
-            }
+
             //endregion
 
             //region Invoke instructions "M", "L", "I", "S"
@@ -204,7 +183,7 @@ public static void main(String[] args) throws Exception {
         e.printStackTrace();
     }
     try {
-        FileWriter myWriter = new FileWriter("filename.txt");
+        FileWriter myWriter = new FileWriter("log.txt");
         myWriter.write("L1I Hits: " + L1I_hits + "\n");
         myWriter.write("L1D Hits: " + L1D_hits + "\n");
         myWriter.write("L2 Hits: " + L2_hits + "\n");
@@ -220,6 +199,7 @@ public static void main(String[] args) throws Exception {
         System.out.println("An error occurred.");
         e.printStackTrace();
     }
+    writeRam();
     //endregion
 
     }
@@ -239,12 +219,24 @@ public static void main(String[] args) throws Exception {
 
         String L1SetBits = address.substring(address.length()-L1b-L1s,address.length()-L1b);
         String L1BlockBits= address.substring(address.length()-L1s,address.length());
-        int L1Set = Integer.parseInt(L1SetBits,2);
+        int L1Set = 0;
+        if (L1SetBits.equals("")) {
+            L1Set = 0;
+        }
+        else {
+            L1Set = Integer.parseInt(L1SetBits, 2);
+        }
 
         String L2TagBits = address.substring(0,address.length()-L2b-L2s);
         String L2SetBits = address.substring(address.length()-L2b-L2s,address.length()-L2b);
         String L2BlockBits= address.substring(address.length()-L2s,address.length());
-        int L2Set = Integer.parseInt(L1SetBits,2);
+        int L2Set = 0;
+        if (L1SetBits.equals("")) {
+            L2Set = 0;
+        }
+        else {
+            L2Set = Integer.parseInt(L1SetBits, 2);
+        }
 
         int L1PositionLine = GetAvailableLineFromCache(currentCache, L1E, L1Set, L1TagBits); // Returns valid line number.
         int L2PositionLine = GetAvailableLineFromCache(L2, L2E, L2Set, L2TagBits); // Returns valid line number.
@@ -297,14 +289,14 @@ public static void main(String[] args) throws Exception {
             //region Miss L1
             //Update Hit
             switch (cacheName) {
-                case "L1I":
+                case "L1I" -> {
                     L1I_misses++;
                     currentCacheName = "L1I";
-                    break;
-                case "L1D":
+                }
+                case "L1D" -> {
                     L1D_misses++;
                     currentCacheName = "L1D";
-                    break;
+                }
             }
             System.out.print(currentCacheName + " miss ");
             //endregion
@@ -359,20 +351,32 @@ public static void main(String[] args) throws Exception {
     public static void StoreData(Line[][] L1D, Line[][] L2, String address, int size, String data) throws Exception {
 
         //region Settings
-        Line[][] currentCache = L1D;
         int AddressInDecimal = Integer.parseInt(address, 2);
 
         String L1TagBits = address.substring(0,address.length()-L1b-L1s);
         String L1SetBits = address.substring(address.length()-L1b-L1s,address.length()-L1b);
         String L1BlockBits= address.substring(address.length()-L1s,address.length());
-        int L1Set = Integer.parseInt(L1SetBits,2);
+        int L1Set = 0;
+        if (L1SetBits.equals("")) {
+            L1Set = 0;
+        }
+        else {
+            L1Set = Integer.parseInt(L1SetBits, 2);
+        }
 
         String L2TagBits = address.substring(0,address.length()-L2b-L2s);
         String L2SetBits = address.substring(address.length()-L2b-L2s,address.length()-L2b);
         String L2BlockBits= address.substring(address.length()-L2s,address.length());
-        int L2Set = Integer.parseInt(L1SetBits,2);
 
-        int L1PositionLine = GetAvailableLineFromCache(currentCache, L1E, L1Set, L1TagBits); // Returns valid line number.
+        int L2Set = 0;
+        if (L1SetBits.equals("")) {
+            L2Set = 0;
+        }
+        else {
+            L2Set = Integer.parseInt(L1SetBits, 2);
+        }
+
+        int L1PositionLine = GetAvailableLineFromCache(L1D, L1E, L1Set, L1TagBits); // Returns valid line number.
         int L2PositionLine = GetAvailableLineFromCache(L2, L2E, L2Set, L2TagBits); // Returns valid line number.
 
         //endregion
@@ -476,28 +480,19 @@ public static void main(String[] args) throws Exception {
                 extractedData = extractedData + RAM.get(address + i);
             }
         }
-
-         // Extracted Data from RAM.
-
-        //String dataAsString = RAM.get(address);
-        // System.out.println(extractedData);
-
         // Store the data to the appropriate line of L2.
-
         boolean freeLine = false;
         int positionLine = 0;
 
         for (int index = 0; index < L2E; index++) { // No Eviction.
-
             if (L2[setNumber][index].getValidBit().equals("0")) {
-
                 freeLine = true;
                 positionLine = index;
                 break;
             }
         }
 
-        if (freeLine == false) { // Eviction here.
+        if (!freeLine) { // Eviction here.
 
             L2_evictions++;
 
@@ -547,7 +542,7 @@ public static void main(String[] args) throws Exception {
         }
 
         //Determine which line of destination to write data
-        if (freeLine == false) { // There is eviction
+        if (!freeLine) { // There is eviction
 
             eviction++;
             SystemTime++;
@@ -676,24 +671,23 @@ public static void main(String[] args) throws Exception {
             RAM.set(decimalAddress, data.substring(i*2,i*2+2));
 
     }
-//    public static void updateHit(Line[][] currentCache, int cacheType) {
-//        String cacheName;
-//        //Update Hit
-//        switch (cacheType) {
-//            case 0:
-//                L1I_hits++;
-//                currentCacheName = "L1I";
-//                break;
-//            case 1:
-//                L1D_hits++;
-//                currentCacheName = "L1D";
-//                break;
-//        }
-//        System.out.println(currentCacheName + " hit.");
-//        //Update time
-//        SystemTime++;
-//        tempSystemTime = SystemTime;
-//        assert currentCache != null;
-//        currentCache[L1Set][L1PositionLine].setTime(tempSystemTime);
-//    }
+    public static void writeRam() {
+        try {
+            FileWriter myWriter = new FileWriter("RAM.txt");
+
+            for(int i = 0; i < RAM.size(); i++) {
+                if (RAM.get(i).length() == 1)
+                    myWriter.write(i + ": " + "0" + RAM.get(i) + "\n");
+                else {
+                    myWriter.write(i + ": " + RAM.get(i) + "\n");
+                }
+            }
+
+            myWriter.close();
+            System.out.println("Successfully wrote to the file.");
+        } catch (IOException e) {
+            System.out.println("An error occurred.");
+            e.printStackTrace();
+        }
+    }
 }

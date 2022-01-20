@@ -40,7 +40,7 @@ class test {
 
 
     static ArrayList<String> RAM = new ArrayList<>();
-public static void main(String args[]) throws IOException  {
+public static void main(String args[]) throws Exception {
 
     //region CREATE RAM
     DataInputStream input = new DataInputStream(new FileInputStream("RAM.dat"));
@@ -102,19 +102,28 @@ public static void main(String args[]) throws IOException  {
     //endregion
 
         String trace1= "L 001da310, 6"; // Example trace
+        File file=new File("trace.txt");    //creates a new file instance
+        FileReader fr=new FileReader(file);   //reads the file
+        BufferedReader br=new BufferedReader(fr);  //creates a buffering character input stream
+        StringBuffer sb=new StringBuffer();    //constructs a string buffer with no characters
+        String line;
+        while((line=br.readLine())!=null)
+        while ()
         String[] tokenized =tokenizeInput(trace1);
         String instruction = tokenized[0];
+
+    //region Set currentCache
         Line[][] currentCache;
-
-
         if (instruction.equals("L")) {
-            currentCache = L1D;
-        }
-        else if (instruction.equals("I")) {
-            currentCache = L1I;
-        }
+                currentCache = L1D;
+            }
+            else if (instruction.equals("I")) {
+                currentCache = L1I;
+            }
+    //endregion
 
-        if (instruction.equals("L")){
+    //region Invoke instructions "M", "L", "I", "S"
+    if (instruction.equals("L")){
             tokenized = tokenizeInput(trace1);
             String address = hexToBinary(tokenized[1]);
             int size = Integer.parseInt(tokenized[2]);
@@ -127,29 +136,45 @@ public static void main(String args[]) throws IOException  {
             System.out.println("L " + address + " " + size);
 
             // Execute the instruction with L1D cache.
-            getInstructionAndData(L1I, L1D, L2, address, size, 0);
+            getInstructionAndData(L1I, L1D, L2, address, size, "L1D");
             System.out.println("hello");
         }
         else if (instruction.equals("I")) {
 
+            tokenized = tokenizeInput(trace1);
+            String address = hexToBinary(tokenized[1]);
+            int size = Integer.parseInt(tokenized[2]);
+            String data = tokenized[3];
+
+            // size --> 0 skip to the next instruction.
+//            if (size == 0) {
+//
+//                continue;
+//            }
+
+            // Instruction, address, size and data info.
+            System.out.println("S " + address + " " + size + " " + data);
+
+            // Store the given data for L1D and L2 cache.
+            StoreData(L1D, L2, address, size, data);
+
+//            break;
         }
+    //endregion
 
     }
     public static void getInstructionAndData(Line[][] L1I, Line[][] L1D, Line[][] L2, String address,
-                                             int size, int cacheType) throws IOException {
+                                             int size, String cacheName) throws IOException {
+
+        //region Settings
         Line[][] currentCache = null;
         //set Cache type
-        switch (cacheType) { //Set cacheType to I or D
-            case 0 -> currentCache = L1I;
-            case 1 -> {
-                currentCache = L1D;
-                ;
-            }
+        switch (cacheName) { //Set cacheType to I or D
+            case "L1I" -> currentCache = L1I;
+            case "L1D" -> currentCache = L1D;
         }
         int AddressInDecimal = Integer.parseInt(address, 2);
 
-
-        //region Settings
         String L1TagBits = address.substring(0,address.length()-L1b-L1s);
 
         String L1SetBits = address.substring(address.length()-L1b-L1s,address.length()-L1b);
@@ -163,20 +188,20 @@ public static void main(String args[]) throws IOException  {
 
         int L1PositionLine = GetAvailableLineFromCache(currentCache, L1E, L1Set, L1TagBits); // Returns valid line number.
         int L2PositionLine = GetAvailableLineFromCache(L2, L2E, L2Set, L2TagBits); // Returns valid line number.
-
         //endregion
 
+        //region Check hits and misses
         //BEGINNING OF HITS MISSES
         String currentCacheName = "";
         if (L1PositionLine != -1) {
             //region Hit L1
             //Update Hit
-            switch (cacheType) {
-                case 0:
+            switch (cacheName) {
+                case "L1I":
                     L1I_hits++;
                     currentCacheName = "L1I";
                     break;
-                case 1:
+                case "L1D":
                     L1D_hits++;
                     currentCacheName = "L1D";
                     break;
@@ -213,12 +238,12 @@ public static void main(String args[]) throws IOException  {
         else {
             //region Miss L1
             //Update Hit
-            switch (cacheType) {
-                case 0:
+            switch (cacheName) {
+                case "L1I":
                     L1I_hits++;
                     currentCacheName = "L1I";
                     break;
-                case 1:
+                case "L2D":
                     L1D_hits++;
                     currentCacheName = "L1D";
                     break;
@@ -240,9 +265,9 @@ public static void main(String args[]) throws IOException  {
                 int L1Eviction = checkEvictionAndWriteData(L2, currentCache, L2PositionLine, L2Set, L1Set,
                         L1TagBits, L1E);
 
-                if (cacheType == 1) { // Check Cache Type.
+                if (cacheName.equals("L1I")) { // Check Cache Type.
                     L1I_evictions += L1Eviction;
-                } else {
+                } else if (cacheName.equals("L1D")) {
                     L1D_evictions += L1Eviction;
                 }
                 //endregion
@@ -260,11 +285,11 @@ public static void main(String args[]) throws IOException  {
                 int L1Eviction = checkEvictionAndWriteData(L2, currentCache, L2PositionLine, L2Set, L1Set,
                         L1TagBits, L1E);
 
-                if (cacheType == 1) { // Check Cache Type.
+                if (cacheName.equals("L1I")) { // Check Cache Type.
 
                     L1I_evictions += L1Eviction;
 
-                } else {
+                } else if (cacheName.equals("L1D")){
 
                     L1D_evictions += L1Eviction;
 
@@ -272,6 +297,105 @@ public static void main(String args[]) throws IOException  {
                 //endregion
             }
         }
+        //endregion
+
+    }
+    public static void StoreData(Line[][] L1D, Line[][] L2, String address, int size, String data) throws Exception {
+
+        //region Settings
+        Line[][] currentCache = L1D;
+        int AddressInDecimal = Integer.parseInt(address, 2);
+
+        String L1TagBits = address.substring(0,address.length()-L1b-L1s);
+        String L1SetBits = address.substring(address.length()-L1b-L1s,address.length()-L1b);
+        String L1BlockBits= address.substring(address.length()-L1s,address.length());
+        int L1Set = Integer.parseInt(L1SetBits,2);
+
+        String L2TagBits = address.substring(0,address.length()-L2b-L2s);
+        String L2SetBits = address.substring(address.length()-L2b-L2s,address.length()-L2b);
+        String L2BlockBits= address.substring(address.length()-L2s,address.length());
+        int L2Set = Integer.parseInt(L1SetBits,2);
+
+        int L1PositionLine = GetAvailableLineFromCache(currentCache, L1E, L1Set, L1TagBits); // Returns valid line number.
+        int L2PositionLine = GetAvailableLineFromCache(L2, L2E, L2Set, L2TagBits); // Returns valid line number.
+
+        //endregion
+
+        //region Check hits and misses
+        //when hit, get line data, remove first "size" bits, concatenate "data" + "modified line data" and put it in line data
+        if (L1PositionLine != -1) { // Hit in L1D.
+
+            //region L1 Hit
+            System.out.print("L1D" + " hit");
+            L1D_hits++;
+
+            // Update the system time and L1D cache time.
+            SystemTime++;
+            tempSystemTime = SystemTime;
+            L1D[L1Set][L1PositionLine].setTime(tempSystemTime);
+
+            // Update the L1D cache data.
+
+            L1D[L1Set][L1PositionLine].setData(data + L1D[L1Set][L1PositionLine].getData().substring(size*2));
+            //endregion
+
+            if (L2PositionLine != -1) { // Hit in L2.
+
+                //region L1 Hit, L2 Hit
+                System.out.print("L2" + " hit");
+                System.out.println();
+                L2_hits++;
+
+                // Update the system time and L2 cache time.
+                SystemTime++;
+                tempSystemTime = SystemTime;
+                L2[L2Set][L2PositionLine].setTime(tempSystemTime);
+                // Update the L2 cache data.
+                L2[L2Set][L2PositionLine].setData(data + L2[L2Set][L2PositionLine].getData().substring(size*2));
+                //endregion
+
+            } else { // Hit in L1, Miss in L2. Eviction for L2.
+
+                //region L1 Hit, L2 Miss
+                System.out.println("L2" + " miss");
+                System.out.println();
+                L2_misses++;
+                //endregion
+
+            }
+
+        } else { // Miss in L1D. Eviction for L1D.
+
+            //region L1D miss
+            System.out.print("L1D" + " miss");
+            L1D_misses++;
+            //endregion
+
+            if (L2PositionLine != -1) { // Miss in L1D, hit in L2.
+
+                //region L1D miss, L2 hit
+                System.out.print("L2" + " hit");
+                System.out.println();
+                L2_hits++;
+                // Take eviction for L1D and load the data to the L1D cache.
+                L2[L2Set][L2PositionLine].setData(data + L2[L2Set][L2PositionLine].getData().substring(size*2));
+                //endregion
+
+            } else { // Miss L1 and L2 load the data from RAM.
+
+                //region L1D miss, L2 miss
+                System.out.print("L2" + " miss");
+                System.out.println();
+                L2_misses++;
+                //endregion
+
+            }
+
+        }
+        //endregion
+
+        writeDatatoRAM(AddressInDecimal, size, data);
+        System.out.println("Store in " + "L1D" + ", " + "L2" + ", " + "RAM");
 
     }
 
@@ -385,6 +509,15 @@ public static void main(String args[]) throws IOException  {
         //L1 hit, L2 miss, no free line in L2 ----> Load to L2 from L1, no eviction
     }
 
+    public static void ModifyData(Line[][] L1I, Line[][] L1D, Line[][] L2, int size, String address, String data)
+            throws Exception {
+
+        // Load the data and then store the data.
+        getInstructionAndData(L1I, L1D, L2, address, size, "L1D");
+        StoreData(L1D, L2, address, size, data);
+
+    }
+
     public static int GetAvailableLineFromCache(Line[][] cache, int lineNumber, int set, String tag) {
         for (int index = 0; index < lineNumber; index++) {
             if (cache[set][index].getValidBit().equals("1")
@@ -466,6 +599,17 @@ public static void main(String args[]) throws IOException  {
 
         // returning the converted Binary
         return binary;
+    }
+
+    public static void writeDatatoRAM(int decimalAddress, int size, String data) throws Exception {
+
+        RandomAccessFile file = new RandomAccessFile("RAM.dat", "rw"); // Random acces the RAM.dat
+
+        file.seek(decimalAddress); // Set Pointer to where the address yields in the ram.
+        file.write(data.getBytes()); // Convert the data in bytes then write to the specified place in the RAM.
+
+        file.close();
+
     }
 //    public static void updateHit(Line[][] currentCache, int cacheType) {
 //        String cacheName;
